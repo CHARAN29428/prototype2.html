@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TableBite – Restaurant & Food Ordering</title>
+<style>
+  :root{--bg:#faf6f1;--card:#fff;--ink:#2b2420;--mute:#8a7f76;--line:#eadfd3;--brand:#c8553d;--brand-d:#a8432e;--dark:#2b2420;--gold:#f0a500;--ok:#2e9e5b}
+  @media(prefers-color-scheme:dark){:root{--bg:#1d1916;--card:#282320;--ink:#f3ebe3;--mute:#a79b90;--line:#3a332e;--dark:#f3ebe3}}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input,select,textarea{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand)}
+  header{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .logo{font-weight:800;font-size:20px;color:var(--brand);margin-right:auto}
+  .btn{padding:9px 16px;border-radius:10px;font-weight:700;font-size:13px}
+  .btn-p{background:var(--brand);color:#fff}.btn-p:hover{background:var(--brand-d)}
+  .btn-d{background:var(--dark);color:var(--bg)}
+  .btn-o{border:1px solid var(--line)}
+  nav{display:flex;gap:6px;max-width:1100px;margin:16px auto 0;padding:0 16px}
+  nav button{padding:8px 16px;border-radius:99px;font-weight:700;font-size:13px;color:var(--mute)}
+  nav button.on{background:var(--dark);color:var(--bg)}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  .view{display:none}.view.on{display:block}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+  .chip{padding:6px 14px;border-radius:99px;border:1px solid var(--line);font-size:12px;font-weight:700;background:var(--card)}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+  .dish{display:flex;flex-direction:column;gap:6px}
+  .emoji{font-size:48px;text-align:center;background:var(--bg);border-radius:14px;padding:14px 0;position:relative}
+  .fav{position:absolute;top:8px;right:10px;font-size:18px}
+  .dish h3{font-size:15px}.dish p{font-size:12px;color:var(--mute);flex:1}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .price{font-weight:800;color:var(--brand)}
+  .tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+  h2{font-size:20px;margin-bottom:4px}.sub{font-size:12px;color:var(--mute);margin-bottom:14px}
+  /* cart drawer */
+  #drawer{position:fixed;top:0;right:0;height:100%;width:min(380px,100%);background:var(--card);border-left:1px solid var(--line);z-index:30;transform:translateX(100%);transition:.25s;display:flex;flex-direction:column;padding:18px}
+  #drawer.open{transform:none}
+  #cart-items{flex:1;overflow:auto;margin:12px 0}
+  .ci{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;gap:8px}
+  .qty{display:flex;align-items:center;gap:8px}.qty button{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);font-weight:800}
+  /* orders */
+  .steps{display:flex;gap:4px;margin:12px 0 4px}
+  .step{flex:1;height:6px;border-radius:9px;background:var(--line)}.step.done{background:var(--ok)}
+  .badge{font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;background:var(--bg);border:1px solid var(--line)}
+  /* reviews */
+  .two{display:grid;grid-template-columns:1fr;gap:16px}@media(min-width:800px){.two{grid-template-columns:320px 1fr}}
+  .stars{color:var(--gold);letter-spacing:2px}.stars i{color:var(--line);font-style:normal}
+  .bar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mute);margin-top:5px}
+  .bar div{flex:1;height:8px;background:var(--bg);border-radius:9px;overflow:hidden}.bar span{display:block;height:100%;background:var(--gold)}
+  #star-in button{font-size:28px;color:var(--line)}#star-in button.on{color:var(--gold)}
+  label{font-size:12px;font-weight:700;color:var(--mute);display:block;margin:10px 0 4px}
+  /* modal & toast */
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
+  #modal.open{display:flex}
+  .box{background:var(--card);border-radius:20px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:24px}
+  .box p{font-size:14px;margin-top:12px;color:var(--mute)}
+  .team{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:6px;margin-top:8px;font-size:12px}
+  .team div{display:flex;justify-content:space-between;background:var(--bg);padding:8px 12px;border-radius:10px}
+  #toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,80px);background:var(--dark);color:var(--bg);padding:10px 20px;border-radius:99px;font-size:13px;font-weight:700;transition:.3s;z-index:50}
+  #toast.show{transform:translate(-50%,0)}
+  .empty{text-align:center;color:var(--mute);padding:40px 0;font-size:13px;border:1px dashed var(--line);border-radius:16px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🍽️ TableBite</div>
+  <input id="search" placeholder="Search dishes…" style="max-width:240px" oninput="renderMenu()">
+  <button class="btn btn-d" onclick="toggleModal(true)">📄 Abstract</button>
+  <button class="btn btn-p" onclick="toggleCart(true)">🛒 Cart (<span id="cart-count">0</span>)</button>
+</header>
+
+<nav id="tabs">
+  <button class="on" data-tab="menu">Menu</button>
+  <button data-tab="orders">My Orders</button>
+  <button data-tab="reviews">Reviews ★</button>
+</nav>
+
+<main>
+  <!-- MENU -->
+  <section id="view-menu" class="view on">
+    <h2>Our Menu</h2><p class="sub">Browse, customise and order without waiting.</p>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="menu-grid"></div>
+  </section>
+
+  <!-- ORDERS -->
+  <section id="view-orders" class="view">
+    <h2>Order Tracking & History</h2><p class="sub">Status updates automatically every few seconds in this demo.</p>
+    <div id="orders-list" style="display:grid;gap:12px"></div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section id="view-reviews" class="view">
+    <h2>Customer Reviews</h2><p class="sub">Share your experience after every order.</p>
+    <div class="two">
+      <div style="display:grid;gap:16px;align-content:start">
+        <div class="card" id="rv-summary"></div>
+        <form class="card" onsubmit="submitReview(event)">
+          <b>Write a review</b>
+          <label>Rating</label><div id="star-in"></div>
+          <label>Name</label><input id="rv-name" required maxlength="40" placeholder="Your name">
+          <label>About</label><select id="rv-dish"></select>
+          <label>Experience</label><textarea id="rv-text" rows="3" required maxlength="400" placeholder="Food, service, delivery…"></textarea>
+          <button class="btn btn-p" style="width:100%;margin-top:12px">Submit review</button>
+        </form>
+      </div>
+      <div>
+        <div class="row" style="margin-bottom:10px">
+          <span class="sub" id="rv-count" style="margin:0"></span>
+          <select id="rv-filter" style="width:auto" onchange="renderReviews()">
+            <option value="0">All ratings</option><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+          </select>
+        </div>
+        <div id="rv-list" style="display:grid;gap:12px"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- CART DRAWER -->
+<aside id="drawer">
+  <div class="row"><h2 style="margin:0">Your Cart</h2><button onclick="toggleCart(false)" style="font-size:20px">✕</button></div>
+  <div id="cart-items"></div>
+  <label>Order type</label>
+  <select id="otype"><option>Dine-in (table)</option><option>Takeaway</option><option>Home delivery</option></select>
+  <label>Payment</label>
+  <select id="pay"><option>UPI</option><option>Credit / Debit card</option><option>Net banking</option><option>Cash on delivery</option></select>
+  <div class="row" style="margin:14px 0"><b>Total</b><b class="price" id="cart-total">₹0</b></div>
+  <button class="btn btn-p" onclick="placeOrder()">Place order</button>
+</aside>
+
+<!-- ABSTRACT MODAL -->
+<div id="modal" onclick="if(event.target===this)toggleModal(false)">
+  <div class="box">
+    <div class="row"><div><span class="tag" style="color:var(--brand)">Project Abstract</span><h2 style="margin:0">Restaurant & Food Ordering Website</h2></div><button onclick="toggleModal(false)" style="font-size:20px">✕</button></div>
+    <p>The Restaurant and Food Ordering Website is a web-based platform designed to make the process of browsing menus, placing orders, and managing restaurant operations simple and convenient for both customers and restaurant staff. The main objective of the system is to provide customers with an easy way to view restaurant menus, select food items, customize orders, and place them online without the need for phone calls or physical visits. The portal allows users to browse dishes by category such as starters, main course, beverages, and desserts, view item details including price, description, and images, and add selected items to a cart before checkout. Customers can create accounts, save their favourite orders, track order status, and view their past order history. Restaurant administrators can manage the menu by adding, updating, or removing items, view incoming orders in real time, update order status, and maintain records of daily sales.</p>
+    <p>The system is developed using HTML, CSS, and JavaScript, with HTML used to structure the webpages and display menu and order information, CSS used to create a responsive and visually appealing interface, and JavaScript used to implement features such as cart management, price calculation, searching, filtering, and interactive order tracking, along with a suitable backend and database for storing menu, order, and customer information.</p>
+    <p>The system also supports features such as order confirmation notifications, estimated delivery or preparation time, multiple payment options, and a simple feedback and rating mechanism so that customers can share their experience after each order. The interface is designed to be user-friendly and accessible on both desktop and mobile devices, making it convenient for customers to place orders anytime. By replacing traditional manual ordering methods with a centralized digital platform, the proposed system aims to improve convenience, accuracy, and speed for customers while helping restaurants manage orders and operations more efficiently.</p>
+    <p class="tag" style="margin-top:18px">Team Members</p>
+    <div class="team">
+      <div><span>Lankada Leela Lakshitha</span><span>24981A42A4</span></div>
+      <div><span>Sunkari Lakshmi Lavanya</span><span>24981A4205</span></div>
+      <div><span>Are Charan</span><span>24981A421A</span></div>
+      <div><span>Modalavalasa Gnaneswara</span><span>24981A422J</span></div>
+      <div><span>Kasa Rakesh Vinay Shankar Manikanta</span><span>24981A425C</span></div>
+    </div>
+    <p style="font-size:12px">Head of Department, CSE (AIML)</p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ---------- Data ---------- */
+const MENU = [
+  {id:1, cat:'Starters',    name:'Paneer Tikka',        e:'🍢', price:220, desc:'Charred cottage cheese skewers with mint chutney.'},
+  {id:2, cat:'Starters',    name:'Punjabi Samosa (2)',  e:'🥟', price:60,  desc:'Crispy pastry filled with spiced potato and peas.'},
+  {id:3, cat:'Starters',    name:'Chicken 65',          e:'🍗', price:260, desc:'Spicy deep-fried chicken with curry leaves.'},
+  {id:4, cat:'Main Course', name:'Butter Chicken',      e:'🍛', price:340, desc:'Creamy tomato gravy with tandoori chicken.'},
+  {id:5, cat:'Main Course', name:'Veg Biryani',         e:'🍚', price:240, desc:'Fragrant basmati rice with vegetables and saffron.'},
+  {id:6, cat:'Main Course', name:'Margherita Pizza',    e:'🍕', price:299, desc:'Wood-fired base, tomato, mozzarella, basil.'},
+  {id:7, cat:'Beverages',   name:'Masala Chai',         e:'☕', price:40,  desc:'Hot milk tea with ginger and cardamom.'},
+  {id:8, cat:'Beverages',   name:'Fresh Lime Soda',     e:'🥤', price:70,  desc:'Sweet or salted, served chilled.'},
+  {id:9, cat:'Desserts',    name:'Gulab Jamun (2)',     e:'🍮', price:90,  desc:'Warm milk dumplings soaked in rose syrup.'},
+  {id:10,cat:'Desserts',    name:'Chocolate Brownie',   e:'🍫', price:130, desc:'Fudgy brownie with vanilla ice cream.'}
+];
+const CATS = ['All','Starters','Main Course','Beverages','Desserts','❤ Favourites'];
+const STAGES = ['Placed','Preparing','Ready','Delivered'];
+
+/* ---------- Helpers ---------- */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch(e){ return d } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ---------- State ---------- */
+let cart = {};                       // {dishId: qty}
+let favs = store.get('tb_favs', []);
+let orders = store.get('tb_orders', []);
+let reviews = store.get('tb_reviews', null) || [
+  {id:'s1',name:'Ananya R.',dish:'Overall experience',rating:5,text:'Ordering from the table was quick and the food arrived hot in under 15 minutes.',date:'2026-10-04',helpful:14},
+  {id:'s2',name:'Karthik M.',dish:'Paneer Tikka',rating:5,text:'Perfectly charred and soft inside. Best starter on the menu.',date:'2026-10-02',helpful:9},
+  {id:'s3',name:'Sneha P.',dish:'Punjabi Samosa (2)',rating:4,text:'Crispy and well spiced, great value. Could use more chutney.',date:'2026-09-29',helpful:5},
+  {id:'s4',name:'Rahul D.',dish:'Overall experience',rating:4,text:'Live order tracking is a nice touch and the site is easy on mobile.',date:'2026-09-27',helpful:7},
+  {id:'s5',name:'Priya S.',dish:'Overall experience',rating:3,text:'Good food but my order took longer than estimated on a busy Saturday.',date:'2026-09-22',helpful:3}
+];
+let cat = 'All', newRating = 0;
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.tab));
+  if (b.dataset.tab === 'orders') renderOrders();
+  if (b.dataset.tab === 'reviews') renderReviews();
+});
+
+/* ---------- Menu ---------- */
+function renderChips(){
+  $('chips').innerHTML = CATS.map(c => `<button class="chip ${c===cat?'on':''}" onclick="cat='${c}';renderChips();renderMenu()">${c}</button>`).join('');
+}
+function renderMenu(){
+  const q = $('search').value.toLowerCase().trim();
+  const list = MENU.filter(m =>
+    (cat==='All' || (cat==='❤ Favourites' ? favs.includes(m.id) : m.cat===cat)) &&
+    (m.name+m.desc).toLowerCase().includes(q));
+  $('menu-grid').innerHTML = list.length ? list.map(m => `
+    <div class="card dish">
+      <div class="emoji">${m.e}<button class="fav" onclick="toggleFav(${m.id})">${favs.includes(m.id)?'❤️':'🤍'}</button></div>
+      <span class="tag">${m.cat}</span>
+      <h3>${m.name}</h3><p>${m.desc}</p>
+      <div class="row"><span class="price">₹${m.price}</span><button class="btn btn-p" onclick="addToCart(${m.id})">+ Add</button></div>
+    </div>`).join('') : '<div class="empty" style="grid-column:1/-1">No dishes found.</div>';
+}
+function toggleFav(id){
+  favs = favs.includes(id) ? favs.filter(x=>x!==id) : [...favs, id];
+  store.set('tb_favs', favs); renderMenu();
+}
+
+/* ---------- Cart ---------- */
+function toggleCart(open){ $('drawer').classList.toggle('open', open); if(open) renderCart(); }
+function addToCart(id){ cart[id] = (cart[id]||0) + 1; renderCart(); toast('Added to cart'); }
+function changeQty(id, d){ cart[id] += d; if(cart[id] <= 0) delete cart[id]; renderCart(); }
+function cartTotal(){ return Object.entries(cart).reduce((s,[id,q]) => s + MENU.find(m=>m.id==id).price * q, 0); }
+function renderCart(){
+  const ids = Object.keys(cart);
+  $('cart-count').textContent = ids.reduce((s,id)=>s+cart[id],0);
+  $('cart-total').textContent = '₹' + cartTotal();
+  $('cart-items').innerHTML = ids.length ? ids.map(id => {
+    const m = MENU.find(x=>x.id==id);
+    return `<div class="ci"><span>${m.e} ${m.name}<br><small style="color:var(--mute)">₹${m.price} each</small></span>
+      <div class="qty"><button onclick="changeQty(${id},-1)">−</button>${cart[id]}<button onclick="changeQty(${id},1)">+</button></div>
+      <b>₹${m.price*cart[id]}</b></div>`;
+  }).join('') : '<div class="empty">Your cart is empty.</div>';
+}
+function placeOrder(){
+  if(!Object.keys(cart).length){ toast('Add some dishes first'); return; }
+  const items = Object.entries(cart).map(([id,q]) => ({name:MENU.find(m=>m.id==id).name, q}));
+  orders.unshift({
+    id: 'TB' + String(Date.now()).slice(-5), items, total: cartTotal(),
+    type: $('otype').value, pay: $('pay').value, stage: 0,
+    eta: 15 + Math.min(items.length*5, 20), time: new Date().toLocaleString('en-IN')
+  });
+  store.set('tb_orders', orders);
+  cart = {}; renderCart(); toggleCart(false); renderOrders();
+  toast('Order placed! Confirmation sent ✔');
+  document.querySelector('[data-tab=orders]').click();
+}
+
+/* ---------- Orders ---------- */
+function renderOrders(){
+  $('orders-list').innerHTML = orders.length ? orders.map(o => `
+    <div class="card">
+      <div class="row"><b>#${o.id}</b><span class="badge" style="${o.stage===3?'color:var(--ok)':''}">${STAGES[o.stage]}</span></div>
+      <div style="font-size:12px;color:var(--mute)">${o.time} · ${o.type} · ${o.pay}</div>
+      <div style="font-size:13px;margin:8px 0">${o.items.map(i=>esc(i.name)+' × '+i.q).join(', ')}</div>
+      <div class="steps">${STAGES.map((s,i)=>`<div class="step ${i<=o.stage?'done':''}"></div>`).join('')}</div>
+      <div class="row" style="font-size:12px;color:var(--mute)"><span>${o.stage===3?'Completed':'Estimated time: '+Math.max(o.eta-o.stage*5,2)+' min'}</span><b class="price">₹${o.total}</b></div>
+      ${o.stage===3 ? `<button class="btn btn-o" style="margin-top:10px" onclick="reorder('${o.id}')">Order again</button>
+        <button class="btn btn-o" style="margin-top:10px" onclick="rateOrder()">Rate this order</button>` : ''}
+    </div>`).join('') : '<div class="empty">No orders yet. Place your first order from the menu!</div>';
+}
+function reorder(id){
+  orders.find(o=>o.id===id).items.forEach(i => { const m = MENU.find(x=>x.name===i.name); if(m) cart[m.id] = (cart[m.id]||0) + i.q; });
+  renderCart(); toggleCart(true);
+}
+function rateOrder(){ document.querySelector('[data-tab=reviews]').click(); }
+// demo: orders advance automatically (staff would update this from the admin panel)
+setInterval(() => {
+  let changed = false;
+  orders.forEach(o => { if(o.stage < 3){ o.stage++; changed = true; } });
+  if(changed){
+    store.set('tb_orders', orders);
+    if($('view-orders').classList.contains('on')) renderOrders();
+  }
+}, 8000);
+
+/* ---------- Reviews ---------- */
+const stars = n => `<span class="stars">${'★'.repeat(n)}<i>${'★'.repeat(5-n)}</i></span>`;
+function renderStarInput(){
+  $('star-in').innerHTML = [1,2,3,4,5].map(i => `<button type="button" class="${i<=newRating?'on':''}" onclick="newRating=${i};renderStarInput()">★</button>`).join('');
+}
+function renderReviews(){
+  if(!$('rv-dish').options.length){
+    $('rv-dish').innerHTML = ['Overall experience', ...MENU.map(m=>m.name)].map(n=>`<option>${esc(n)}</option>`).join('');
+    renderStarInput();
+  }
+  const total = reviews.length, avg = total ? reviews.reduce((a,r)=>a+r.rating,0)/total : 0;
+  $('rv-summary').innerHTML = `
+    <div style="display:flex;gap:12px;align-items:flex-end">
+      <div style="font-size:42px;font-weight:800;line-height:1">${avg.toFixed(1)}</div>
+      <div>${stars(Math.round(avg))}<div style="font-size:11px;color:var(--mute)">${total} reviews</div></div>
+    </div>` + [5,4,3,2,1].map(n => {
+      const c = reviews.filter(r=>r.rating===n).length;
+      return `<div class="bar"><b>${n}</b><div><span style="width:${total?c/total*100:0}%"></span></div><b>${c}</b></div>`;
+    }).join('');
+  const f = +$('rv-filter').value;
+  const list = reviews.filter(r => !f || r.rating===f).sort((a,b)=>b.date.localeCompare(a.date));
+  $('rv-count').textContent = `Showing ${list.length} of ${total}`;
+  $('rv-list').innerHTML = list.length ? list.map(r => `
+    <div class="card">
+      <div class="row"><div><b>${esc(r.name)}</b><div style="font-size:11px;color:var(--mute)">${r.date}</div></div>${stars(r.rating)}</div>
+      <span class="badge" style="display:inline-block;margin-top:8px">${esc(r.dish)}</span>
+      <p style="font-size:14px;margin:8px 0">${esc(r.text)}</p>
+      <button style="font-size:12px;color:var(--mute);font-weight:700" onclick="helpful('${r.id}')">👍 Helpful (${r.helpful})</button>
+    </div>`).join('') : '<div class="empty">No reviews for this rating yet.</div>';
+}
+function submitReview(e){
+  e.preventDefault();
+  if(!newRating){ toast('Please choose a star rating'); return; }
+  reviews.push({id:'u'+Date.now(), name:$('rv-name').value.trim(), dish:$('rv-dish').value,
+    rating:newRating, text:$('rv-text').value.trim(), date:new Date().toISOString().slice(0,10), helpful:0});
+  store.set('tb_reviews', reviews);
+  e.target.reset(); newRating = 0; renderStarInput(); renderReviews(); toast('Thanks for your feedback!');
+}
+function helpful(id){ reviews.find(r=>r.id===id).helpful++; store.set('tb_reviews', reviews); renderReviews(); }
+
+/* ---------- Abstract modal ---------- */
+function toggleModal(open){ $('modal').classList.toggle('open', open); }
+document.addEventListener('keydown', e => { if(e.key==='Escape'){ toggleModal(false); toggleCart(false); } });
+
+/* ---------- Init ---------- */
+renderChips(); renderMenu(); renderCart();
+</script>
+</body>
+</html>
